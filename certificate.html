@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <title>SSDBS Certificate Portal</title>
+    <style>
+        .font-header { font-family: 'Cinzel', serif; }
+        .font-body { font-family: 'Lora', serif; }
+
+        #sidebar { transition: transform 0.3s ease; z-index: 50; }
+        .sidebar-closed { transform: translateX(-100%); width: 0 !important; padding: 0 !important; overflow: hidden; }
+        
+        .main-layout { display: flex; height: 100vh; background: #0f172a; overflow: hidden; }
+        .preview-area { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto; background: #334155; }
+
+        .cert-container { 
+            width: 210mm; height: 297mm; background: white; padding: 10mm; 
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6); transform: scale(0.5); 
+            transform-origin: top center; flex-shrink: 0; box-sizing: border-box;
+            position: relative; overflow: hidden;
+        }
+
+        .cert-container::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='40' viewBox='0 0 280 40'%3E%3Ctext x='0' y='25' font-family='Arial, sans-serif' font-size='22' font-weight='bold' fill='rgba(0,0,0,0.15)'%3EShreeSetiDeviBasicSchool%3C/text%3E%3C/svg%3E");
+            background-repeat: repeat;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .cert-inner-content {
+            height: 100%; border: 2px solid #78350f; padding: 2rem;
+            display: flex; flex-direction: column; 
+            position: relative; z-index: 5; background: rgba(255,255,255,0.85);
+        }
+
+        .school-name { 
+            display: block; white-space: nowrap; overflow: hidden;
+            font-size: clamp(1.5rem, 3.8vw, 3rem); width: 100%; margin: 0 auto; line-height: 1.2;
+        }
+
+        .cert-body-spacer { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+
+        .cert-text { text-align: center; line-height: 2.2; font-size: 1.15rem; color: #1e293b; padding: 0 25px; }
+        .name-style { font-size: 2.6rem; font-weight: 900; letter-spacing: 1px; display: block; color: #000; margin: 5px 0; line-height: 1.1; }
+        .data-bold { font-weight: 800; color: #000; }
+
+        .sig-wrapper { position: relative; width: 180px; height: 50px; display: flex; align-items: flex-end; justify-content: center; }
+        #out_sig { max-width: 150px; max-height: 70px; object-fit: contain; mix-blend-mode: multiply; }
+
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            html, body { height: 100%; margin: 0 !important; padding: 0 !important; overflow: hidden; }
+            .no-print { display: none !important; }
+            .preview-area { background: white !important; padding: 0 !important; display: block !important; }
+            .cert-container { 
+                position: absolute !important; top: 0 !important; left: 0 !important;
+                width: 210mm !important; height: 297mm !important; 
+                transform: none !important; margin: 0 !important;
+                border: 10pt solid #0f172a !important;
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important;
+            }
+        }
+
+        .input-box { width: 100%; padding: 8px; border-radius: 6px; background: #1e293b; border: 1px solid #475569; color: white; margin-bottom: 10px; outline: none; font-size: 0.85rem; }
+    </style>
+</head>
+<body class="font-body">
+
+    <button onclick="toggleSidebar()" class="no-print fixed bottom-6 left-6 bg-amber-600 text-white p-4 rounded-full shadow-2xl z-[100] font-bold">✎ Open Form</button>
+
+    <div class="main-layout">
+        <div id="sidebar" class="sidebar w-[350px] bg-slate-800 p-5 overflow-y-auto no-print">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-amber-500 font-header text-xl">Student Entry</h2>
+                <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-xs">🖨️ PRINT</button>
+            </div>
+            
+            <div class="flex gap-2">
+                <input type="text" id="in_ref" class="input-box" placeholder="Ref No.">
+                <input type="text" id="in_sn" class="input-box" placeholder="S.N.">
+            </div>
+
+            <select id="in_gender" class="input-box font-bold text-amber-400">
+                <option value="male">MALE</option>
+                <option value="female">FEMALE</option>
+            </select>
+
+            <input type="text" id="in_name" class="input-box" placeholder="STUDENT NAME">
+            <input type="text" id="in_father" class="input-box" placeholder="Father's Name">
+            <input type="text" id="in_mother" class="input-box" placeholder="Mother's Name">
+            <input type="text" id="in_address" class="input-box" placeholder="Address">
+            <input type="text" id="in_program" class="input-box" value="Basic Level Education (Grade 8)">
+
+            <div class="flex gap-2">
+                <input type="text" id="in_grade" class="input-box w-1/2" placeholder="Grade">
+                <input type="text" id="in_gpa" class="input-box w-1/2" placeholder="GPA">
+                <input type="text" id="in_year" class="input-box w-1/3" placeholder="Year">
+            </div>
+
+            <label class="text-[10px] text-slate-400 font-bold uppercase">DOB (B.S.)</label>
+            <input type="text" id="in_bs" class="input-box" placeholder="YYYY/MM/DD" maxlength="10">
+
+            <label class="text-[10px] text-slate-400 font-bold uppercase">Closing Remarks</label>
+            <div class="flex gap-1 mb-2">
+                <input type="text" id="in_remarks" class="input-box mb-0" placeholder="Custom remarks...">
+                <button onclick="randomizeRemarks()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded-lg font-bold">🔀</button>
+            </div>
+
+            <label class="text-[10px] text-slate-400 font-bold uppercase">Date of Issue</label>
+            <input type="date" id="in_issue_raw" class="input-box">
+
+            <label class="text-[10px] text-slate-400 font-bold uppercase mt-2">Signature (Principal)</label>
+            <input type="file" id="sigInp" class="input-box text-xs" accept="image/*">
+
+            <button onclick="clearForm()" class="w-full bg-slate-600 text-white font-bold py-2 rounded-lg mt-2 text-sm">CLEAR FORM</button>
+        </div>
+
+        <div class="preview-area">
+            <div id="cert-pdf" class="cert-container border-[10pt] border-slate-900">
+                <div class="cert-inner-content">
+                    <div class="text-center">
+                        <h1 class="font-header font-bold school-name text-slate-900">Shree Seti Devi Basic School</h1>
+                        <p class="text-amber-900 font-bold uppercase tracking-widest text-xs mt-1">Thakle, Ramechhap, Nepal</p>
+                        <div class="flex justify-between items-end mt-4">
+                            <div class="text-left text-[10px] font-bold uppercase text-slate-500">
+                                <p>Ref: <span id="out_ref" class="text-black"></span></p>
+                                <p>S.N: <span id="out_sn" class="text-black"></span></p>
+                            </div>
+                            <div class="w-24 h-24 border border-slate-300 overflow-hidden bg-slate-100 cursor-pointer" onclick="document.getElementById('imgInp').click()">
+                                <img id="out_img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" class="w-full h-full object-cover">
+                                <input type="file" id="imgInp" class="hidden" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cert-body-spacer">
+                        <div class="text-center mb-8">
+                            <h2 class="font-header text-2xl border-b-2 border-double border-amber-800 inline-block px-8 pb-1 text-slate-800">Character Certificate</h2>
+                        </div>
+
+                        <div class="cert-text">
+                            <p>Certified that <strong id="out_prefix">Mr.</strong> 
+                               <span id="out_name" class="name-style uppercase">STUDENT NAME</span>
+                               <span id="out_rel">son</span> of Mr. <span id="out_father" class="data-bold italic">FATHER NAME</span> 
+                               and Mrs. <span id="out_mother" class="data-bold italic">MOTHER NAME</span>, 
+                               resident of <span id="out_address" class="data-bold">ADDRESS</span>, was a bona-fide student of this school.
+                            </p>
+                            <p><span id="out_sub">He</span> successfully passed the <span id="out_program" class="data-bold">Basic Level Education (Grade 8)</span> examination in <span id="out_year" class="data-bold">YEAR</span> B.S. achieving a Grade Point Average (GPA) of <span id="out_gpa" class="data-bold">GPA</span> with an overall Grade <span id="out_grade" class="data-bold">GRADE</span>.</p>
+                            <p>According to school records, the student's date of birth is <span id="out_bs" class="data-bold">YYYY/MM/DD</span> B.S.</p>
+                            <p id="out_remarks" class="mt-4 italic font-bold text-slate-700 text-sm">Character: GOOD. We wish <span id="out_pronoun">him</span> success in every walk of life.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-end px-4 mb-2">
+                        <div class="text-center">
+                            <p id="issue_date" class="text-xs font-bold text-black">YYYY/MM/DD</p>
+                            <div class="w-32 border-t border-black pt-1 text-[9px] font-bold uppercase tracking-widest">Date of Issue</div>
+                        </div>
+                        <div class="text-center flex flex-col items-center">
+                            <div class="sig-wrapper"><img id="out_sig" class="hidden"></div>
+                            <div class="w-48 border-t border-black pt-1 text-xs font-bold uppercase tracking-widest">Principal</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const remarkOptions = [
+            "Character: GOOD. We wish him success in every walk of life.",
+            "Character: EXCELLENT. We wish him a bright and prosperous future ahead.",
+            "Character: SATISFACTORY. May he achieve great heights in his future endeavors.",
+            "Character: DISCIPLINED. We wish him all the best for his future career.",
+            "Character: EXEMPLARY. We wish him success in his further studies."
+        ];
+
+        function randomizeRemarks() {
+            const isMale = document.getElementById('in_gender').value === 'male';
+            const random = remarkOptions[Math.floor(Math.random() * remarkOptions.length)];
+            
+            // Adjust pronouns based on gender
+            let text = random;
+            if (!isMale) {
+                text = text.replace(/ him/g, ' her').replace(/ he /g, ' she ').replace(/ his /g, ' her');
+            }
+            
+            document.getElementById('in_remarks').value = text;
+            document.getElementById('out_remarks').innerText = text;
+        }
+
+        const sync = (id) => {
+            const el = document.getElementById('in_'+id);
+            if(el) el.addEventListener('input', () => {
+                document.getElementById('out_'+id).innerText = el.value || (id.includes('name') ? 'STUDENT NAME' : '____');
+            });
+        };
+        ['name', 'father', 'mother', 'address', 'program', 'grade', 'gpa', 'year', 'ref', 'sn', 'remarks'].forEach(sync);
+
+        document.getElementById('in_bs').addEventListener('input', function(e) {
+            let val = this.value.replace(/\D/g, ''); 
+            let formatted = '';
+            if (val.length > 0) {
+                formatted += val.substring(0, 4);
+                if (val.length > 4) formatted += '/' + val.substring(4, 6);
+                if (val.length > 6) formatted += '/' + val.substring(6, 8);
+            }
+            this.value = formatted;
+            document.getElementById('out_bs').innerText = formatted || 'YYYY/MM/DD';
+        });
+
+        document.getElementById('in_issue_raw').addEventListener('change', function() {
+            const d = this.value.split('-'); 
+            if(d.length === 3) document.getElementById('issue_date').innerText = `${d[0]}/${d[1]}/${d[2]}`;
+        });
+
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('in_issue_raw').value = `${yyyy}-${mm}-${dd}`;
+        document.getElementById('issue_date').innerText = `${yyyy}/${mm}/${dd}`;
+
+        document.getElementById('in_gender').addEventListener('change', function() {
+            const isMale = this.value === 'male';
+            document.getElementById('out_prefix').innerText = isMale ? 'Mr.' : 'Miss';
+            document.getElementById('out_rel').innerText = isMale ? 'son' : 'daughter';
+            document.getElementById('out_sub').innerText = isMale ? 'He' : 'She';
+            document.getElementById('out_pronoun').innerText = isMale ? 'him' : 'her';
+            // Refresh remarks to update pronouns if already randomized
+            const currentRemarks = document.getElementById('in_remarks').value;
+            if(currentRemarks) {
+                let text = currentRemarks;
+                if(isMale) {
+                    text = text.replace(/ her/g, ' him').replace(/ she /g, ' he ');
+                } else {
+                    text = text.replace(/ him/g, ' her').replace(/ he /g, ' she ');
+                }
+                document.getElementById('in_remarks').value = text;
+                document.getElementById('out_remarks').innerText = text;
+            }
+        });
+
+        document.getElementById('imgInp').onchange = e => {
+            const [file] = e.target.files;
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => { document.getElementById('out_img').src = event.target.result; };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        document.getElementById('sigInp').onchange = e => {
+            const [file] = e.target.files;
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const sig = document.getElementById('out_sig');
+                    sig.src = event.target.result;
+                    sig.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('sidebar-closed'); }
+        
+        function clearForm() {
+            document.querySelectorAll('input').forEach(i => i.value = '');
+            document.querySelectorAll('span[id^="out_"]').forEach(s => {
+                if(s.id === 'out_bs') s.innerText = 'YYYY/MM/DD';
+                else if(s.id === 'out_remarks') s.innerText = 'Character: GOOD. We wish him success in every walk of life.';
+                else s.innerText = '____';
+            });
+            document.getElementById('in_program').value = "Basic Level Education (Grade 8)";
+            document.getElementById('out_program').innerText = "Basic Level Education (Grade 8)";
+            document.getElementById('out_img').src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+            document.getElementById('out_sig').classList.add('hidden');
+        }
+
+        // Initialize default remark
+        document.getElementById('in_remarks').value = "Character: GOOD. We wish him success in every walk of life.";
+    </script>
+</body>
+</html>
