@@ -424,12 +424,108 @@
         }
 
         function printMeritList() {
-            const sorted = Object.values(students).sort((a,b) => b.total - a.total);
-            let html = `<html><head><style>body { font-family: sans-serif; padding: 40px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 10px; }</style></head><body><h1>SSDBS Merit List</h1><table><thead><tr><th>Rank</th><th>Name</th><th>Total Marks</th><th>Result</th></tr></thead><tbody>`;
-            sorted.forEach((s, i) => { html += `<tr><td>${i+1}</td><td>${s.name}</td><td>${s.total}</td><td>${s.pass ? 'PASS' : 'FAIL'}</td></tr>`; });
-            html += `</tbody></table></body></html>`;
-            const win = window.open(); win.document.write(html); win.document.close(); win.print();
-        }
+    // 1. Get School Name and Class Context
+    const schoolName = "SHREE SETI DEVI BASIC SCHOOL";
+    
+    // 2. Prepare and Sort Data by Name (Alphabetical A-Z)
+    const sortedByName = Object.values(students).sort((a, b) => 
+        a.name.localeCompare(b.name)
+    );
+
+    // 3. Determine the Class for the Header (from the first student found)
+    const classValue = sortedByName.length > 0 ? sortedByName[0].grade : "---";
+
+    let html = `
+    <html>
+    <head>
+        <title>Merit List - Class ${classValue}</title>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
+            .header { text-align: center; border-bottom: 3px solid #7f1d1d; padding-bottom: 15px; margin-bottom: 25px; }
+            h1 { color: #7f1d1d; margin: 0; text-transform: uppercase; font-size: 26px; letter-spacing: 1px; }
+            .sub-header { font-size: 20px; font-weight: bold; margin-top: 8px; color: #334155; text-transform: uppercase; }
+            .meta-info { margin-top: 5px; font-size: 13px; color: #64748b; font-weight: bold; }
+            
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { background-color: #f8fafc; color: #475569; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+            th, td { border: 1px solid #cbd5e1; padding: 12px 15px; text-align: left; }
+            tr:nth-child(even) { background-color: #fdfdfd; }
+            
+            .rank-col { font-weight: 900; text-align: center; width: 60px; color: #7f1d1d; }
+            .name-col { text-transform: uppercase; font-weight: bold; }
+            .pass { color: #15803d; font-weight: 800; }
+            .fail { color: #b91c1c; font-weight: 800; }
+            
+            .footer { margin-top: 80px; display: flex; justify-content: space-between; padding: 0 20px; }
+            .sig-box { border-top: 2px solid #1e293b; width: 200px; text-align: center; padding-top: 8px; font-size: 13px; font-weight: bold; text-transform: uppercase; }
+            
+            @media print { 
+                .no-print { display: none; } 
+                body { padding: 20px; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>${schoolName}</h1>
+            <div class="sub-header">Official Merit List - Class: ${classValue}</div>
+            <div class="meta-info">Academic Year: 2082 | Report Date: ${new Date().toLocaleDateString()}</div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="rank-col">Rank</th>
+                    <th>Student Name</th>
+                    <th>Roll No</th>
+                    <th>Total Marks</th>
+                    <th>Percentage</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    // 4. Generate Table Rows
+    // Note: We use the sortedByName array here
+    sortedByName.forEach((s, i) => { 
+        // Calculate percentage for the merit list view
+        const totalPossible = s.subjects.reduce((sum, sub) => sum + (parseFloat(sub.f) || 100), 0);
+        const percentage = totalPossible > 0 ? ((s.total / totalPossible) * 100).toFixed(1) : 0;
+
+        html += `
+            <tr>
+                <td class="rank-col">${i + 1}</td>
+                <td class="name-col">${s.name}</td>
+                <td>${s.roll}</td>
+                <td>${s.total}</td>
+                <td>${percentage}%</td>
+                <td class="${s.pass ? 'pass' : 'fail'}">${s.pass ? 'PASS' : 'FAIL'}</td>
+            </tr>`; 
+    });
+
+    html += `
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <div class="sig-box">Class Teacher</div>
+            <div class="sig-box">Exam Coordinator</div>
+            <div class="sig-box">Principal</div>
+        </div>
+
+        <div class="no-print" style="text-align:center; margin-top: 40px;">
+            <button onclick="window.print()" style="background:#7f1d1d; color:white; padding:12px 30px; border:none; cursor:pointer; border-radius:8px; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                🖨️ Confirm Print
+            </button>
+        </div>
+    </body>
+    </html>`;
+
+    // 5. Open and Print
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+}0
 
         function exportToExcel() {
             let csv = "Rank,Name,Total Marks,Result\n";
